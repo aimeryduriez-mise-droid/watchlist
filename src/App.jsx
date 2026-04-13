@@ -17,12 +17,28 @@ const CATEGORIES = [
 const IMG = "https://image.tmdb.org/t/p/w500";
 const IMG_ORIG = "https://image.tmdb.org/t/p/w780";
 
-// ── Storage ────────────────────────────────────────────────────────────────
-function loadList() {
-  try { const r = localStorage.getItem("watchlist-v6"); return r ? JSON.parse(r) : []; } catch(e) { return []; }
+// ── Storage (Upstash Redis via API — sync across all devices) ──────────────
+async function loadList() {
+  try {
+    const r = await fetch("/api/data");
+    if (!r.ok) throw new Error();
+    return await r.json();
+  } catch(e) {
+    // fallback to localStorage if offline
+    try { const r = localStorage.getItem("watchlist-v6"); return r ? JSON.parse(r) : []; } catch(e2) { return []; }
+  }
 }
-function saveList(list) {
+async function saveList(list) {
+  // always update localStorage as instant cache
   try { localStorage.setItem("watchlist-v6", JSON.stringify(list)); } catch(e) {}
+  // sync to server
+  try {
+    await fetch("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(list)
+    });
+  } catch(e) {}
 }
 
 // ── TMDB API ───────────────────────────────────────────────────────────────
@@ -472,11 +488,19 @@ function DetailModal({ item, onClose, onDelete, onToggleWatched, onToggleSeason 
 
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [watchlist, setWatchlist] = useState(function(){ return loadList(); });
+  const [watchlist, setWatchlist] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
   const [filterWatched, setFilterWatched] = useState("all");
+
+  useEffect(function() {
+    loadList().then(function(list) {
+      setWatchlist(list);
+      setLoading(false);
+    });
+  }, []);
 
   const update = useCallback(function(nl){ setWatchlist(nl); saveList(nl); }, []);
   function handleAdd(item){ update([...watchlist, item]); }
@@ -495,6 +519,15 @@ export default function App() {
     update(nl);
     setDetailItem(function(p){ return p&&p.id===id?nl.find(function(i){return i.id===id;}):p; });
   }
+
+  if (loading) return (
+    <div style={{ minHeight:"100vh", background:"white", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ textAlign:"center", color:"#9ca3af", fontFamily:"'DM Sans',sans-serif" }}>
+        <div style={{ fontSize:"3rem", marginBottom:12 }}>🎬</div>
+        <p style={{ margin:0 }}>Chargement de votre liste…</p>
+      </div>
+    </div>
+  );
 
   const total=watchlist.length, seen=watchlist.filter(function(i){return i.watched;}).length;
   let filtered=activeCategory==="all"?watchlist:watchlist.filter(function(i){return i.category===activeCategory;});

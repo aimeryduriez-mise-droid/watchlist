@@ -1,44 +1,30 @@
-# Watch List v2 — avec TMDB
+# Watch List v3 — Synchronisation multi-appareils
 
-## Nouveautés v2
-- Vraies jaquettes officielles (TMDB)
-- Séries à venir / très récentes incluses
-- Backdrop cinématographique dans la fiche détail
-- Mini-poster par saison
+## Nouveautés v3
+- Données synchronisées sur tous les appareils (téléphone, PC, tablette)
+- Base de données Redis via Upstash (gratuit)
+- Fallback localStorage si hors-ligne
 
-## Obtenir une clé API TMDB (gratuit)
+## Étape 1 — Créer une base Upstash (gratuit)
 
-1. Créez un compte sur https://www.themoviedb.org
-2. Allez dans : Account → Settings → API → Create → Developer
-3. Remplissez le formulaire (usage personnel)
-4. Copiez votre **API Key (v3 auth)**
+1. Allez sur https://upstash.com → Sign Up
+2. Cliquez "Create Database"
+3. Nom : watchlist, région : EU-West → Create
+4. Section "REST API", copiez :
+   - UPSTASH_REDIS_REST_URL
+   - UPSTASH_REDIS_REST_TOKEN
 
-## Déploiement
+## Étape 2 — Ajouter dans Vercel
 
-### 1. Pusher le code sur GitHub
-```powershell
+Settings → Environment Variables :
+- UPSTASH_REDIS_REST_URL  → URL Upstash
+- UPSTASH_REDIS_REST_TOKEN → Token Upstash
+- TMDB_API_KEY → déjà configuré
+
+## Étape 3 — Déployer
+
 git add .
-git commit -m "v2 TMDB"
+git commit -m "v3 sync"
 git push
-```
 
-### 2. Ajouter la variable d'environnement sur Vercel
-Dans votre projet Vercel → Settings → Environment Variables :
-- Name : `TMDB_API_KEY`
-- Value : votre clé TMDB
-
-Puis → Deployments → Redeploy
-
-## Structure
-```
-watchlist/
-├── api/
-│   └── tmdb.js      ← Proxy sécurisé TMDB
-├── src/
-│   ├── main.jsx
-│   └── App.jsx
-├── index.html
-├── package.json
-├── vite.config.js
-└── vercel.json
-```
+Puis Vercel → Deployments → Redeploy
