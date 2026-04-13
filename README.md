@@ -1,81 +1,44 @@
-# Watch List — Guide de déploiement
+# Watch List v2 — avec TMDB
 
-## Prérequis
-- Node.js installé (https://nodejs.org → version LTS)
-- Un compte GitHub (https://github.com)
-- Un compte Vercel (https://vercel.com → "Sign up with GitHub")
-- Une clé API Anthropic (https://console.anthropic.com → API Keys → Create Key)
+## Nouveautés v2
+- Vraies jaquettes officielles (TMDB)
+- Séries à venir / très récentes incluses
+- Backdrop cinématographique dans la fiche détail
+- Mini-poster par saison
 
----
+## Obtenir une clé API TMDB (gratuit)
 
-## Étape 1 — Tester en local
+1. Créez un compte sur https://www.themoviedb.org
+2. Allez dans : Account → Settings → API → Create → Developer
+3. Remplissez le formulaire (usage personnel)
+4. Copiez votre **API Key (v3 auth)**
 
-Ouvrez un terminal dans le dossier `watchlist` :
+## Déploiement
 
-```bash
-npm install
-npm run dev
-```
-
-Ouvrez http://localhost:5173 — l'app s'affiche.
-⚠️ La recherche ne fonctionnera pas encore en local (pas de clé API). C'est normal.
-
----
-
-## Étape 2 — Mettre le projet sur GitHub
-
-1. Allez sur https://github.com → "New repository"
-2. Nom : `watchlist`, laissez tout par défaut → "Create repository"
-3. Dans le terminal :
-
-```bash
-git init
+### 1. Pusher le code sur GitHub
+```powershell
 git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/VOTRE_USERNAME/watchlist.git
-git push -u origin main
+git commit -m "v2 TMDB"
+git push
 ```
 
----
+### 2. Ajouter la variable d'environnement sur Vercel
+Dans votre projet Vercel → Settings → Environment Variables :
+- Name : `TMDB_API_KEY`
+- Value : votre clé TMDB
 
-## Étape 3 — Déployer sur Vercel
+Puis → Deployments → Redeploy
 
-1. Allez sur https://vercel.com
-2. Cliquez "Add New Project"
-3. Sélectionnez votre repo `watchlist`
-4. Cliquez "Deploy" (les paramètres par défaut conviennent)
-
----
-
-## Étape 4 — Ajouter la clé API
-
-1. Dans Vercel, allez dans votre projet → **Settings** → **Environment Variables**
-2. Ajoutez :
-   - **Name** : `ANTHROPIC_API_KEY`
-   - **Value** : votre clé API (commence par `sk-ant-...`)
-3. Cliquez "Save"
-4. Allez dans **Deployments** → cliquez "Redeploy" sur le dernier déploiement
-
-✅ Votre app est maintenant en ligne sur `https://watchlist-xxx.vercel.app`
-
----
-
-## Structure du projet
-
+## Structure
 ```
 watchlist/
 ├── api/
-│   └── search.js        ← Proxy sécurisé (clé API jamais exposée)
+│   └── tmdb.js      ← Proxy sécurisé TMDB
 ├── src/
 │   ├── main.jsx
-│   └── App.jsx          ← Application complète
+│   └── App.jsx
 ├── index.html
 ├── package.json
 ├── vite.config.js
 └── vercel.json
 ```
-
-## Notes
-- Les données sont sauvegardées dans le localStorage du navigateur (par appareil)
-- La clé API n'est jamais exposée côté client — elle est uniquement dans la fonction serveur Vercel
